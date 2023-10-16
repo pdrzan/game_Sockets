@@ -23,6 +23,16 @@ def requestUDP(message, address):
                 serverSocket.sendto("Successfully authenticated", address)
             else:
                 serverSocket.sendto("Authentication failed", address)
+        case 'listOnline':
+            if verifyUserOnline(message[2], address):
+                serverSocket.sendto(returnUsersOnline(), address)
+            else:
+                serverSocket.sendto("Not logged in", address)
+        case 'listPlaying':
+            if verifyUserOnline(message[2], address):
+                serverSocket.sendto(returnUsersOnline(), address)
+            else:
+                serverSocket.sendto("Not logged in", address)
 
 
 def registerLog(users, type):
@@ -100,6 +110,18 @@ def delUsersPlaying(firstUser, secondUser):
     usersOnline.pop(firstUser + 'X' + secondUser)
     changeStatusUserOnline(firstUser)
     changeStatusUserOnline(secondUser)
+
+
+def returnMatch(match):
+    users = match.split('X')
+    return f"{users[0]}({usersPlaying[match]['ip'][0]}:{usersPlaying[match]['port'][0]}) X {users[1]}({usersPlaying[match]['ip'][1]}:{usersPlaying[match]['port'][1]})\n"
+
+
+def returnUsersPlaying():
+    stringAnswer = ''
+    for match in usersPlaying:
+        stringAnswer = f"{stringAnswer}{returnMatch(match)}"
+    return stringAnswer
 
 
 def loadData(file):
