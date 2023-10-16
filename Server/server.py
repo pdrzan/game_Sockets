@@ -2,11 +2,27 @@ import threading
 import sys
 import time
 import json
+import hashlib
 from socket import *
 
+# message pattern
+# ' ' is the separator
+# message[0]: type
 
-def requestTCP(socket, address):
-    sentence = socket.recv(1024)
+
+def requestUDP(message, address):
+    message = message.split()
+    match(message[0]):
+        case 'login':
+            # name user password // pattern
+            if verifyUserExistence(message[2]):
+                registerUser(message[1], message[2], message[3])
+                serverSocket.sendto("Successfully authenticated", address)
+            elif verifyPassword(message[1], message[3]):
+                addUserOnline(message[2], address[0], address[1])
+                serverSocket.sendto("Successfully authenticated", address)
+            else:
+                serverSocket.sendto("Authentication failed", address)
 
 
 def registerLog(users, type):
@@ -53,6 +69,12 @@ def changeStatusUserOnline(user):
 def delUserOnline(user):
     usersOnline.pop(user)
     registerLog([user], 'disconnect')
+
+
+def verifyUserOnline(user, address):
+    if user in usersOnline and usersOnline[user]['ip'] == address[0] and usersOnline[user]['port'] == address[1]:
+        return True
+    return False
 
 
 def returnUserData(user):
@@ -102,8 +124,16 @@ def verifyUserExistence(user):
     return False
 
 
+def verifyPassword(user, password):
+    h = hashlib.new('sha256')
+    h.update(bytes(password, 'utf-8'))
+    return usersData[user]['password'] == h.hexdigest()
+
+
 def registerUser(name, user, password):
-    usersData[user] = {'name': name, 'password': password}
+    h = hashlib.new('sha256')
+    h.update(bytes(password, 'utf-8'))
+    usersData[user] = {'name': name, 'password': h.hexdigest()}
     registerLog([user], 'register')
     saveData('../Data/loginData.json', usersData)
 
@@ -114,9 +144,9 @@ def deleteUser(user):
 
 
 serverPort = 12000
-serverSocket = socket(AF_INET, SOCK_STREAM)
+serverSocket = socket(AF_INET, SOCK_DGRAM)
 serverSocket.bind(("", serverPort))
-serverSocket.listen(1)
+# serverSocket.listen(1)
 
 # usersOnline format:
 # {
@@ -141,8 +171,9 @@ usersOnline = {}
 # }
 usersPlaying = {}
 
-usersData = loadData('../Data/loginData.json')
 
+usersData = loadData('../Data/loginData.json')
+# usersData format:
 # {
 #   'user':{
 #       'name': '',
@@ -152,4 +183,4 @@ usersData = loadData('../Data/loginData.json')
 # }
 
 # while 1:
-#     threading.Thread(target=requestTCP, args=(serverSocket.accept()))
+#     threading.Thread(target=requestUDP, args=(serverSocket.recvfrom(1024)))
