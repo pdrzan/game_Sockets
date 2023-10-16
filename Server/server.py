@@ -15,7 +15,7 @@ def requestUDP(message, address):
     match(message[0]):
         case 'login':
             # name user password // pattern
-            if verifyUserExistence(message[2]):
+            if not verifyUserExistence(message[2]):
                 registerUser(message[1], message[2], message[3])
                 serverSocket.sendto("Successfully authenticated", address)
             elif verifyPassword(message[1], message[3]):
