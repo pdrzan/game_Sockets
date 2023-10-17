@@ -7,7 +7,8 @@ from socket import *
 
 # message pattern
 # ' ' is the separator
-# message[0]: type
+# message[0]: id
+# message[1]: type
 
 
 def requestUDP(message, address):
@@ -17,22 +18,46 @@ def requestUDP(message, address):
             # name user password // pattern
             if not verifyUserExistence(message[2]):
                 registerUser(message[1], message[2], message[3])
-                serverSocket.sendto("Successfully authenticated", address)
+                authenticationSucess(address)
             elif verifyPassword(message[1], message[3]):
                 addUserOnline(message[2], address[0], address[1])
-                serverSocket.sendto("Successfully authenticated", address)
+                authenticationSucess(address)
             else:
-                serverSocket.sendto("Authentication failed", address)
+                authenticationFailed(address)
         case 'listOnline':
-            if verifyUserOnline(message[2], address):
-                serverSocket.sendto(returnUsersOnline(), address)
+            # user // pattern
+            if verifyUserOnline(message[1], address):
+                sendMessage(returnUsersOnline(), address)
             else:
-                serverSocket.sendto("Not logged in", address)
+                notLogged(address)
         case 'listPlaying':
-            if verifyUserOnline(message[2], address):
-                serverSocket.sendto(returnUsersOnline(), address)
+            # user // pattern
+            if verifyUserOnline(message[1], address):
+                sendMessage(returnUsersPlaying(), address)
             else:
-                serverSocket.sendto("Not logged in", address)
+                notLogged(address)
+        case 'opponentInformation':
+            # user opponent // pattern
+            if verifyUserOnline(message[1], address):
+                sendMessage(returnOpponent(message[2]), address)
+            else:
+                notLogged(address)
+
+
+def sendMessage(message, address):
+    serverSocket.sendto(message, address)
+
+
+def notLogged(address):
+    sendMessage("Not logged in", address)
+
+
+def authenticationFailed(address):
+    serverSocket.sendto("Authentication failed", address)
+
+
+def authenticationSucess(address):
+    serverSocket.sendto("Successfully authenticated", address)
 
 
 def registerLog(users, type):
@@ -89,6 +114,12 @@ def verifyUserOnline(user, address):
 
 def returnUserData(user):
     return f"User: {user} / Status: {usersOnline[user]['status']} / Ip: {usersOnline[user]['ip']} / Port: {usersOnline[user]['port']}\n"
+
+
+def returnOpponent(user):
+    if user in usersOnline:
+        return f"{usersOnline[user]['ip']} {usersOnline[user]['port']}"
+    return "Opponent not found"
 
 
 def returnUsersOnline():
@@ -205,4 +236,4 @@ usersData = loadData('../Data/loginData.json')
 # }
 
 # while 1:
-#     threading.Thread(target=requestUDP, args=(serverSocket.recvfrom(1024)))
+#     (threading.Thread(target=requestUDP, args=(serverSocket.recvfrom(1024)))).start()
