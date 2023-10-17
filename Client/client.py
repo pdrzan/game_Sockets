@@ -3,12 +3,12 @@ import time
 from socket import *
 from threading import *
 
-id = 0
+idMessage = 0
 idSemaphone = Semaphore(1)
 sock = socket(AF_INET, SOCK_DGRAM)
 sock.settimeout(5)
 playingWith = '' # opponent user
-reciveMessages = {}
+recieveMessages = {}
 connected = False
 semaphore = Semaphore(1)  
 
@@ -17,10 +17,18 @@ def startRecivingMessages():
     while connected:
         msg = sock.recvfrom(1024)
         id = msg.split()[0]
-        reciveMessages[id] = msg[len(id):]
+        recieveMessages[id] = msg[len(id):]
+
+def addIdMessage(message):
+    idSemaphone.acquire()
+    message = f'{idMessage} {message}'
+    idMessage += 1
+    idSemaphone.release()
+    return message, idMessage
 
 
 def sendMessage(message, address=('', 12000)):
+    message = addIdMessage(message)
     sock.sendto(bytes(message, "utf-8"), address)
 
 
