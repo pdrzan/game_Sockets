@@ -21,7 +21,7 @@ def requestUDP(message, address):
                 registerUser(message[2], message[3], message[4])
                 authenticationSucess(message[0], address)
                 addUserOnline(message[3], address[0], address[1])
-            elif verifyPassword(message[2], message[4]):
+            elif verifyPassword(message[3], message[4]):
                 addUserOnline(message[3], address[0], address[1])
                 authenticationSucess(message[0], address)
             else:
@@ -38,10 +38,10 @@ def requestUDP(message, address):
                 sendMessage(f"{message[0]} {returnUsersPlaying()}", address)
             else:
                 notLogged(message[0], address)
-        case 'opponentInformation':
+        case 'userInformation':
             # user opponent // pattern
-            if verifyUserOnline(message[1], address):
-                sendMessage(returnOpponent(message[2]), address)
+            if verifyUserOnline(message[2], address):
+                sendMessage(f"{message[0]} {returnOpponent(message[2])}", address)
             else:
                 notLogged(message[0], address)
 

@@ -1,1 +1,14 @@
-{}
+{
+    "Zanelato": {
+        "name": "Pedro",
+        "password": "75bfaa6c4182960268f3ce66b7c5a0eaa7f30a925c8e3578e5f9967b76dbb188"
+    },
+    "pdrzan": {
+        "name": "pedro",
+        "password": "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3"
+    },
+    "pdrzan2": {
+        "name": "zanelato",
+        "password": "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3"
+    }
+}

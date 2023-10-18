@@ -11,7 +11,7 @@ sock = socket(AF_INET, SOCK_DGRAM)
 sock.settimeout(5)
 sock.bind(("", serverPort))
 playingWith = ''  # opponent user
-recieveMessages = {}
+recievedMessages = {}
 connected = True
 semaphore = Semaphore(1)
 
@@ -21,13 +21,14 @@ def startRecivingMessages():
         try:
             message, address = sock.recvfrom(1024)
             message = message.decode('utf-8')
+            print(message)
             localIdMessage = message.split()[0]
             if (message.split()[1] == 'GAME_INI'):
                 invitedToPlay(message, address)
             elif (message.split()[1] == 'GAME_OVER'):
                 recivedGameOver(message)
             else:
-                recieveMessages[localIdMessage] = message[len(
+                recievedMessages[localIdMessage] = message[len(
                     localIdMessage) + 1:]
         except:
             if not connected:
@@ -64,11 +65,11 @@ def sendMessage(message, address=('', 12000), isGame=False):
 def sendReceiveMessage(message, address=('', 12000)):
     localIdMessage = sendMessage(message, address)
     timeout = 5
-    while localIdMessage not in recieveMessages and timeout > 0:
+    while localIdMessage not in recievedMessages and timeout > 0:
         time.sleep(0.3)
         timeout -= 0.3
     if timeout > 0:
-        return recieveMessages.pop(localIdMessage)
+        return recievedMessages.pop(localIdMessage)
     return 'Message Error'
 
 
@@ -99,14 +100,12 @@ def login():
 
 
 def listUserOnline(user):
-    semaphore.acquire()
     receivedMessage = sendReceiveMessage(f'listOnline {user}')
     print(receivedMessage)
     semaphore.release()
 
 
 def listUserPlaying(user):
-    semaphore.acquire()
     receivedMessage = sendReceiveMessage(f'listPlaying {user}')
     print(receivedMessage)
     semaphore.release()
@@ -114,13 +113,15 @@ def listUserPlaying(user):
 
 def getUserInformation(user, opponent):
     return sendReceiveMessage(
-        f'opponentInformation {user} {opponent}')
+        f'userInformation {user} {opponent}')
 
 def inviteToPlay(user, opponent):
     receivedMessage = getUserInformation(user, opponent)
+    print(receivedMessage)
     if receivedMessage != "Opponent not found" and receivedMessage != 'Message Error':
         receivedMessage = receivedMessage.split()
         address = (receivedMessage[0], int(receivedMessage[1]))
+        print(address)
         receivedMessage = sendReceiveMessage(f'GAME_INI {user}', address)
         if (receivedMessage == 'GAME_ACK'):
             sendMessage(f'playing {user} {opponent}')
@@ -138,11 +139,11 @@ def invitedToPlay(message, address):
     semaphore.acquire()
     opponent = message.split()[2]
     print("The user {opponent} invited you to play")
-    answer = input("Type y to accept and any other key to decline") == 'y'
+    answer = input("Type y to accept and any other key to decline")
     semaphore.release()
     if answer == 'y':
         stopPlaying()
-        play(, opponent, address)
+        play(opponent, address)
 
 
 def printGameOver():
@@ -164,11 +165,11 @@ def sendGameOver(address):
     semaphore.release()
 
 
-def play(user, opponent, addressOponent):
+def play(opponent, addressOponent):
     playingWith = opponent
     while playing and playingWith == opponent:
         # TO DO implement the game
-        user = user
+        opponent = opponent
     semaphore.acquire()
     if playing:
         print(
