@@ -12,52 +12,55 @@ from socket import *
 
 
 def requestUDP(message, address):
-    message = message.split()
-    match(message[0]):
+    message = message.decode('utf-8').split()
+    print(message)
+    match(message[1]):
         case 'login':
             # name user password // pattern
-            if not verifyUserExistence(message[2]):
-                registerUser(message[1], message[2], message[3])
-                authenticationSucess(address)
-            elif verifyPassword(message[1], message[3]):
-                addUserOnline(message[2], address[0], address[1])
-                authenticationSucess(address)
+            if not verifyUserExistence(message[3]):
+                registerUser(message[2], message[3], message[4])
+                authenticationSucess(message[0], address)
+                addUserOnline(message[3], address[0], address[1])
+            elif verifyPassword(message[2], message[4]):
+                addUserOnline(message[3], address[0], address[1])
+                authenticationSucess(message[0], address)
             else:
-                authenticationFailed(address)
+                authenticationFailed(message[0], address)
         case 'listOnline':
             # user // pattern
-            if verifyUserOnline(message[1], address):
-                sendMessage(returnUsersOnline(), address)
+            if verifyUserOnline(message[2], address):
+                sendMessage(f"{message[0]} {returnUsersOnline()}", address)
             else:
-                notLogged(address)
+                notLogged(message[0], address)
         case 'listPlaying':
             # user // pattern
-            if verifyUserOnline(message[1], address):
-                sendMessage(returnUsersPlaying(), address)
+            if verifyUserOnline(message[2], address):
+                sendMessage(f"{message[0]} {returnUsersPlaying()}", address)
             else:
-                notLogged(address)
+                notLogged(message[0], address)
         case 'opponentInformation':
             # user opponent // pattern
             if verifyUserOnline(message[1], address):
                 sendMessage(returnOpponent(message[2]), address)
             else:
-                notLogged(address)
+                notLogged(message[0], address)
 
 
 def sendMessage(message, address):
-    serverSocket.sendto(message, address)
+    print(message)
+    serverSocket.sendto(bytes(message, 'utf-8'), address)
 
 
-def notLogged(address):
-    sendMessage("Not logged in", address)
+def notLogged(idMessage, address):
+    sendMessage(f"{idMessage} Not logged in", address)
 
 
-def authenticationFailed(address):
-    serverSocket.sendto("Authentication failed", address)
+def authenticationFailed(idMessage, address):
+    sendMessage(f"{idMessage} Authentication failed", address)
 
 
-def authenticationSucess(address):
-    serverSocket.sendto("Successfully authenticated", address)
+def authenticationSucess(idMessage, address):
+    sendMessage(f"{idMessage} Successfully authenticated", address)
 
 
 def registerLog(users, type):
@@ -152,6 +155,8 @@ def returnUsersPlaying():
     stringAnswer = ''
     for match in usersPlaying:
         stringAnswer = f"{stringAnswer}{returnMatch(match)}"
+    if len(usersPlaying) == 0:
+        stringAnswer = "No users playing"
     return stringAnswer
 
 
@@ -234,6 +239,5 @@ usersData = loadData('../Data/loginData.json')
 #       },
 #   'userN': {...}
 # }
-
-# while 1:
-#     (threading.Thread(target=requestUDP, args=(serverSocket.recvfrom(1024)))).start()
+while 1:
+    (threading.Thread(target=requestUDP, args=(serverSocket.recvfrom(1024)))).start()
