@@ -41,7 +41,7 @@ def requestUDP(message, address):
         case 'userInformation':
             # user opponent // pattern
             if verifyUserOnline(message[2], address):
-                sendMessage(f"{message[0]} {returnOpponent(message[2])}", address)
+                sendMessage(f"{message[0]} {returnOpponent(message[3])}", address)
             else:
                 notLogged(message[0], address)
 
