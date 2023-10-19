@@ -9,8 +9,8 @@ def startRecivingMessages():
     while connected:
         try:
             message, address = sock.recvfrom(1024)
-            message = message.decode('utf-8')
-            localIdMessage = message.split()[0]
+            message = decodeByteToString(message)
+            localIdMessage = getFirstWord(message)
             if (message.split()[1] == 'GAME_INI'):
                 (threading.Thread(target=invitedToPlay, args=(message, address))).start()
             elif (message.split()[1] == 'GAME_OVER'):
@@ -22,6 +22,13 @@ def startRecivingMessages():
             if not connected:
                 break
 
+
+def decodeByteToString(message):
+    return message.decode('utf-8')
+
+
+def toBytes(message):
+    return bytes(message, "utf-8")
 
 def addIdMessage(message):
     global idMessage
@@ -36,18 +43,15 @@ def addGameIdMessage(message):
     return f'GAME {message}'
 
 
-def getIdMessage(message):
+def getFirstWord(message):
     return message.split()[0]
 
 
 def sendMessage(message, address=('', 12000), addId=True):
     if addId:
         message = addIdMessage(message)
-    else:
-        message = str(message)
-    localIdMessage = getIdMessage(message)
-    sock.sendto(bytes(message, "utf-8"), address)
-    return localIdMessage
+    sock.sendto(toBytes(message), address)
+    return getFirstWord(message)
 
 
 def sendReceiveMessage(message, address=('', 12000), addId=True, hasTimeOut=True):
@@ -84,22 +88,20 @@ def login():
     name, user, password = getLoginInformation()
     receivedMessage = sendReceiveMessage(f"login {name} {user} {password}")
     while receivedMessage != "Successfully authenticated":
-        semaphore.acquire()
+        semaphorePrint.acquire()
         printSeparator("Wrong credentails. Try again:")
         name, user, password = getLoginInformation()
-        semaphore.release()
+        semaphorePrint.release()
         receivedMessage = sendReceiveMessage(f"login {name} {user} {password}")
     return user
 
 
 def listUserOnline(user):
-    receivedMessage = sendReceiveMessage(f'listOnline {user}')
-    print(receivedMessage)
+    print(sendReceiveMessage(f'listOnline {user}'))
 
 
 def listUserPlaying(user):
-    receivedMessage = sendReceiveMessage(f'listPlaying {user}')
-    print(receivedMessage)
+    print(sendReceiveMessage(f'listPlaying {user}'))
 
 
 def getUserInformation(user, opponent):
@@ -110,71 +112,74 @@ def getUserInformation(user, opponent):
 def inviteToPlay(user, opponent):
     global playing, clientInititedTheGame
     receivedMessage = getUserInformation(user, opponent)
-    print(receivedMessage)
     if receivedMessage != "Opponent not found" and receivedMessage != 'Message Error':
-        receivedMessage = receivedMessage.split()
-        address = (receivedMessage[0], int(receivedMessage[1]))
+        ipOpponent, portOpponent = receivedMessage.split()
+        address = (ipOpponent, int(portOpponent))
         receivedMessage = sendReceiveMessage(f'GAME_INI {user}', address)
         if (receivedMessage == 'GAME_ACK'):
             clientInititedTheGame = True
             playing = True
             sendMessage(f'playing {user} {opponent}')
-            return address
     return address
 
 
-def stopPlaying(address):
+def stopPlaying(opponent):
     global playing
     if playing:
-        sendGameOver(address)
-        playing = False
+        printGameOver(opponent)
+    playing = False
+    
 
+def getResponseInvite(opponent):
+    print(f"The user {opponent} invited you to play")
+    return input("Type y to accept and any other key to decline: ")
 
 def invitedToPlay(message, address):
     global playing, wasInvitedToPlay
     wasInvitedToPlay = True
-    semaphore.acquire()
+    semaphorePrint.acquire()
     opponent = message.split()[2]
-    print(f"The user {opponent} invited you to play")
-    answer = input("Type y to accept and any other key to decline: ")
-    semaphore.release()
+    answer = getResponseInvite(opponent)
+    semaphorePrint.release()
     if answer == 'y':
-        localIdMessage = message.split()[0]
-        sendMessage(f"{localIdMessage} GAME_ACK", address, False)
-        stopPlaying(address)
+        recivedIdMessage = getFirstWord(message)
+        sendMessage(f"{recivedIdMessage} GAME_ACK", address, False)
+        stopPlaying(opponent)
         (threading.Thread(target=play, args=(opponent, address))).start()
     wasInvitedToPlay = False
 
 
-def printGameOver():
-    print("The game with {opponent} is over")
+def printGameOver(opponent):
+    print(f"The game with {opponent} is over")
 
 
 def recivedGameOver(address):
-    semaphore.acquire()
+    semaphorePrint.acquire()
     stopPlaying(address)
     printGameOver()
-    semaphore.release()
+    semaphorePrint.release()
 
 
 def sendGameOver(address):
-    semaphore.acquire()
+    semaphorePrint.acquire()
     sendMessage("GAME_OVER", address)
-    printGameOver()
-    semaphore.release()
+    semaphorePrint.release()
 
 
-def printGameOptions():
+def printGameOptions(clientInititedTheGame):
     print("Choose a option:")
-    print("1. Guess a letter")
-    print("2. Guess the word")
-    print("3. Quit the game")
+    if not clientInititedTheGame:
+        print("1. Guess a letter")
+        print("2. Guess the word")
+        print("3. Quit the game")
+    else:
+        print("1. Continue playing")
+        print("2. Quit the game")
 
 
-def getOptionGame():
-    printGameOptions()
+def getOptionGame(clientInititedTheGame):
+    printGameOptions(clientInititedTheGame)
     return int(input("Option: "))
-
 
 def processOptionGame(option, address):
     match(option):
@@ -214,27 +219,34 @@ def returnLettersMissing(word, letters):
 def opponentWin(address, secretWord):
     global playing
     sendMessage(f"GAME WIN {secretWord}", address, False)
+    print("You losed, maybe next time...")
+    printSeparator()
     playing = False
 
 
 def opponentLose(address, secretWord):
     global playing
     sendMessage(f"GAME LOSE {secretWord}", address, False)
+    print("You won, Congrats!")
+    printSeparator()
     playing = False
 
 
+def excludeFirstWord(message):
+    return message.replace(f"{message.split()[0]} ", '')
+
 def processResult(message):
     global playing
-    result = message.split()[0]
-    message = message.replace(f"{result} ", '')
-    semaphore.acquire()
+    result = getFirstWord(message)
+    message = excludeFirstWord(message)
+    semaphorePrint.acquire()
     match(result):
         case "WIN":
             print("You won, Congrats!")
         case "LOSE":
             print("You losed, maybe next time...")
     print(f"The secret word was: {message}")
-    semaphore.release()
+    semaphorePrint.release()
     playing = False
 
 def pringHangManWord(word, tries):
@@ -274,58 +286,65 @@ def pringHangManWord(word, tries):
             print( "|    0    ")
             print( "|   -|-   ")
             print(f"|   / \   {word}")
+    print("\n")
 
 
 def play(opponent, addressOponent):
     global playing, wasInvitedToPlay
     playing = True
     if clientInititedTheGame:
-        semaphore.acquire()
+        semaphorePrint.acquire()
         secretWord = input("Type the secret word: ")
-        semaphore.release()
+        semaphorePrint.release()
+
         lettersMissing = returnLenWord(secretWord)
         letters = []
         tries = 0
+
         while playing:
             if not wasInvitedToPlay:
-                recievedMessage = sendReceiveMessage(
-                    f"GAME {tries} {returnWordLettersFound(secretWord, letters)}", addressOponent, False, False)
-                if(len(recievedMessage) == 1):
-                    if recievedMessage not in letters:
-                        letters.append(recievedMessage)
-                    if lettersMissing > returnLettersMissing(secretWord, letters):
-                        lettersMissing = returnLettersMissing(secretWord, letters)
-                        if(lettersMissing == 0):
-                            opponentWin(addressOponent, secretWord)
-                    else:
-                        tries += 1
-                else:
-                    if recievedMessage == secretWord:
-                        opponentWin(addressOponent, secretWord)
-                    else:
-                        tries += 1
-                if(tries >= 6):
-                    opponentLose(addressOponent, secretWord)
+                option = getOptionGame(clientInititedTheGame)
+                match(option):
+                    case 1:
+                        recievedMessage = sendReceiveMessage(
+                            f"GAME {tries} {returnWordLettersFound(secretWord, letters)}", addressOponent, False, False)
+                        if(len(recievedMessage) == 1):
+                            if recievedMessage not in letters:
+                                letters.append(recievedMessage)
+                            if lettersMissing > returnLettersMissing(secretWord, letters):
+                                lettersMissing = returnLettersMissing(secretWord, letters)
+                                if(lettersMissing == 0):
+                                    opponentWin(addressOponent, secretWord)
+                            else:
+                                tries += 1
+                        else:
+                            if recievedMessage == secretWord:
+                                opponentWin(addressOponent, secretWord)
+                            else:
+                                tries += 1
+                        if(tries >= 6):
+                            opponentLose(addressOponent, secretWord)
+                    case 2:
+                        stopPlaying(addressOponent)
     else:   
         while playing:
             if not wasInvitedToPlay:
                 recievedMessage = recieveMessage("GAME")
                 if recievedMessage != "Message Error":
-                    if(recievedMessage.split()[0] != "WIN" and recievedMessage.split()[0] != "LOSE"):
-                        tries = recievedMessage.split()[0]
-                        recievedMessage = recievedMessage.replace(f"{tries} ", '')
-                        tries = int(tries)
+                    if(getFirstWord(recievedMessage) != "WIN" and getFirstWord(recievedMessage) != "LOSE"):
+                        tries = int(getFirstWord(recievedMessage))
+                        recievedMessage = excludeFirstWord(recievedMessage)
                         pringHangManWord(recievedMessage, tries)
-                        semaphore.acquire()
-                        option = getOptionGame()
+                        semaphorePrint.acquire()
+                        option = getOptionGame(clientInititedTheGame)
                         processOptionGame(option, addressOponent)
-                        semaphore.release()
+                        semaphorePrint.release()
                     else:
                         processResult(recievedMessage)
                         
-    semaphore.acquire()
-    print(f"Another match was accepted. The match with {opponent} is over.")
-    semaphore.release()
+    # semaphorePrint.acquire()
+    # print(f"Another match was accepted. The match with {opponent} is over.")
+    # semaphorePrint.release()
     return
 
 
@@ -344,6 +363,8 @@ def getOption():
 
 idMessage = 0
 idSemaphone = Semaphore(1)
+semaphorePrint = Semaphore(1)
+
 serverPort = int(input("Plese, type a number port greater than 1024: "))
 sock = socket(AF_INET, SOCK_DGRAM)
 sock.bind(("", serverPort))
@@ -353,34 +374,35 @@ wasInvitedToPlay = False
 clientInititedTheGame = False
 recievedMessages = {}
 connected = True
-semaphore = Semaphore(1)
 
 
 def main():
     global connected, playing
-    (threading.Thread(target=startRecivingMessages, args=())).start()
     playing = False
+
+    (threading.Thread(target=startRecivingMessages, args=())).start()
+
     user = login()
-    connected = True
     while connected:
         if not wasInvitedToPlay and not playing:
-            semaphore.acquire()
+            semaphorePrint.acquire()
             option = getOption()
             match(option):
                 case 1:
                     listUserOnline(user)
-                    semaphore.release()
+                    semaphorePrint.release()
                 case 2:
                     listUserPlaying(user)
-                    semaphore.release()
+                    semaphorePrint.release()
                 case 3:
                     opponent = input("Type the user you wanna play with: ")
-                    semaphore.release()
+                    semaphorePrint.release()
                     addressOponent = inviteToPlay(user, opponent)
                     if playing:
                         play(opponent, addressOponent)
                 case 9:
                     connected = False
+            printSeparator()
     sock.close()
     return
 

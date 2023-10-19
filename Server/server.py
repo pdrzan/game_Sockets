@@ -44,6 +44,17 @@ def requestUDP(message, address):
                 sendMessage(f"{message[0]} {returnOpponent(message[3])}", address)
             else:
                 notLogged(message[0], address)
+        case 'playing':
+            if verifyUserOnline(message[2], address):
+                addUsersPlaying(message[2], message[3])
+            else:
+                notLogged(message[0], address)
+        case 'stopPlaying':
+            if verifyUserOnline(message[2], address):
+                addUsersPlaying(message[2], message[3])
+            else:
+                notLogged(message[0], address)
+
 
 
 def sendMessage(message, address):
