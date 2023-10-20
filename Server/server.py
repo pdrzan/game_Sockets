@@ -1,5 +1,4 @@
 import threading
-import sys
 import time
 import json
 import hashlib
@@ -13,7 +12,7 @@ from socket import *
 
 def requestUDP(message, address):
     message = message.decode('utf-8').split()
-    print(message)
+    print("Recived:\n", message)
     match(message[1]):
         case 'login':
             # name user password // pattern
@@ -63,7 +62,7 @@ def requestUDP(message, address):
 
 
 def sendMessage(message, address):
-    print(message)
+    print("Sent:\n", message)
     serverSocket.sendto(bytes(message, 'utf-8'), address)
 
 
@@ -139,7 +138,7 @@ def verifyUserOnline(user, address):
 
 
 def returnUserData(user):
-    return f"User: {user} / Status: {usersOnline[user]['status']} / Ip: {usersOnline[user]['ip']} / Port: {usersOnline[user]['port']}\n"
+    return f"User: {user} / Status: {usersOnline[user]['status']} / Ip: {usersOnline[user]['ip']} / Port: {usersOnline[user]['port']}"
 
 
 def returnOpponent(user):
@@ -151,7 +150,8 @@ def returnOpponent(user):
 def returnUsersOnline():
     stringAnswer = ''
     for user in usersOnline:
-        stringAnswer = f"{stringAnswer}{returnUserData(user)}"
+        stringAnswer = f"{stringAnswer}{returnUserData(user)}\n"
+    stringAnswer[-1] = ''
     return stringAnswer
 
 
@@ -172,13 +172,14 @@ def delUsersPlaying(firstUser, secondUser):
 
 def returnMatch(match):
     users = match.split('X')
-    return f"{users[0]}({usersPlaying[match]['ip'][0]}:{usersPlaying[match]['port'][0]}) X {users[1]}({usersPlaying[match]['ip'][1]}:{usersPlaying[match]['port'][1]})\n"
+    return f"{users[0]}({usersPlaying[match]['ip'][0]}:{usersPlaying[match]['port'][0]}) X {users[1]}({usersPlaying[match]['ip'][1]}:{usersPlaying[match]['port'][1]})"
 
 
 def returnUsersPlaying():
     stringAnswer = ''
     for match in usersPlaying:
         stringAnswer = f"{stringAnswer}{returnMatch(match)}"
+    stringAnswer[-1] = ''
     if len(usersPlaying) == 0:
         stringAnswer = "No users playing"
     return stringAnswer
