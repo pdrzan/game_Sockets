@@ -74,9 +74,13 @@ def authenticationSucess(idMessage, address):
     sendMessage(f"{idMessage} Successfully authenticated", address)
 
 
+def formatIntSizeTwo(number):
+    return f'{number:02d}'
+
+
 def registerLog(users, type):
     localTime = time.localtime()
-    localTime = f"{localTime.tm_hour}:{localTime.tm_min}:{localTime.tm_sec} {localTime.tm_mday}/{localTime.tm_mon}/{localTime.tm_year}"
+    localTime = f"{formatIntSizeTwo(localTime.tm_hour)}:{formatIntSizeTwo(localTime.tm_min)}:{formatIntSizeTwo(localTime.tm_sec)} {formatIntSizeTwo(localTime.tm_mday)}/{formatIntSizeTwo(localTime.tm_mon)}/{localTime.tm_year}"
     match(type):
         case 'register':
             appendData('../Data/game.log',
