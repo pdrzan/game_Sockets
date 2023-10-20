@@ -26,6 +26,11 @@ def requestUDP(message, address):
                 authenticationSucess(message[0], address)
             else:
                 authenticationFailed(message[0], address)
+        case 'diconnect':
+            if verifyUserOnline(message[2], address):
+                delUserOnline(message[2])
+            else:
+                notLogged(message[0], address)
         case 'listOnline':
             # user // pattern
             if verifyUserOnline(message[2], address):
@@ -41,7 +46,8 @@ def requestUDP(message, address):
         case 'userInformation':
             # user opponent // pattern
             if verifyUserOnline(message[2], address):
-                sendMessage(f"{message[0]} {returnOpponent(message[3])}", address)
+                sendMessage(
+                    f"{message[0]} {returnOpponent(message[3])}", address)
             else:
                 notLogged(message[0], address)
         case 'playing':
@@ -54,7 +60,6 @@ def requestUDP(message, address):
                 delUsersPlaying(message[2], message[3])
             else:
                 notLogged(message[0], address)
-
 
 
 def sendMessage(message, address):
