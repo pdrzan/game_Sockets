@@ -105,6 +105,9 @@ def registerLog(users, type):
         case 'playing':
             appendData('../Data/game.log',
                        f"{localTime}: Users {users[0]} and {users[1]} are playing\n")
+        case 'stopPlaying':
+            appendData('../Data/game.log',
+                       f"{localTime}: Users {users[0]} and {users[1]} are not playing anymore\n")
         case 'disconnect':
             appendData('../Data/game.log',
                        f"{localTime}: User {users[0]} disconnected\n")
@@ -162,6 +165,7 @@ def addUsersPlaying(firstUser, secondUser):
 
 def delUsersPlaying(firstUser, secondUser):
     usersOnline.pop(firstUser + 'X' + secondUser)
+    registerLog([firstUser, secondUser], 'stopPlaying')
     changeStatusUserOnline(firstUser)
     changeStatusUserOnline(secondUser)
 
