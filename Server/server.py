@@ -51,7 +51,7 @@ def requestUDP(message, address):
                 notLogged(message[0], address)
         case 'stopPlaying':
             if verifyUserOnline(message[2], address):
-                addUsersPlaying(message[2], message[3])
+                delUsersPlaying(message[2], message[3])
             else:
                 notLogged(message[0], address)
 
