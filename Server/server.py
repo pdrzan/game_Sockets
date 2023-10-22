@@ -16,6 +16,7 @@ def requestUDP(message, address):
     match(message[1]):
         case 'login':
             # name user password // pattern
+            print('Passou')
             if not verifyUserExistence(message[3]):
                 registerUser(message[2], message[3], message[4])
                 authenticationSucess(message[0], address)
@@ -89,7 +90,7 @@ def registerLog(users, type):
         case 'register':
             appendData('../Data/game.log',
                        f"{localTime}: User {users[0]} registered\n")
-        case 'conect':
+        case 'connect':
             appendData('../Data/game.log',
                        f"{localTime}: User {users[0]} connected\n")
         case 'timeout':
@@ -151,7 +152,6 @@ def returnUsersOnline():
     stringAnswer = ''
     for user in usersOnline:
         stringAnswer = f"{stringAnswer}{returnUserData(user)}\n"
-    stringAnswer[-1] = ''
     return stringAnswer
 
 
@@ -179,7 +179,6 @@ def returnUsersPlaying():
     stringAnswer = ''
     for match in usersPlaying:
         stringAnswer = f"{stringAnswer}{returnMatch(match)}"
-    stringAnswer[-1] = ''
     if len(usersPlaying) == 0:
         stringAnswer = "No users playing"
     return stringAnswer
