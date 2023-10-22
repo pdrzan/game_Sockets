@@ -188,7 +188,7 @@ def getLetter():
 def getWord():
     try:
         word = input("Type a word: ")
-        if not word.isalpha():
+        if not word.replace(' ', '').isalpha():
             raise ValueError
         return word
     except:
@@ -216,11 +216,13 @@ def listUserPlaying(socket, recievedMessages, user):
 
 
 def inviteToPlay(socket, recievedMessages, user, opponent):
-    addressOpponent = getUserInformation(socket, recievedMessages, user, opponent)
+    addressOpponent = getUserInformation(
+        socket, recievedMessages, user, opponent)
     addressOpponent = addressStrintToAddressTuple(addressOpponent)
     if addressOpponent != "Opponent not found":
         sendMessage(socket, f'GAME_INI {user}', addressOpponent, 'CLIENT_INV')
-        recievedMessage, address = recieveMessage('CLIENT_INV', recievedMessages)
+        recievedMessage, address = recieveMessage(
+            'CLIENT_INVRES', recievedMessages)
         if recievedMessage == 'GAME_ACK':
             return True, addressOpponent
     return False, ''
@@ -231,11 +233,11 @@ def invitedToPlay(socket, recievedMessages):
         'CLIENT_INV', recievedMessages)
     opponent = recievedMessage.split()[1]
     if getInviteResponse(opponent):
-        sendMessage(socket, 'GAME_ACK', addressOpponent, 'CLIENT_INV')
-        return True, addressOpponent
+        sendMessage(socket, 'GAME_ACK', addressOpponent, 'CLIENT_INVRES')
+        return True, addressOpponent, opponent
     else:
-        sendMessage(socket, 'GAME_DEC', addressOpponent, 'CLIENT_INV')
-        return False, ''
+        sendMessage(socket, 'GAME_DEC', addressOpponent, 'CLIENT_INVRES')
+        return False, '', ''
 
 
 def removeGameMessages(recievedMessages):
@@ -269,6 +271,18 @@ def sendGameLose(socket, addressOpponent, secretWord):
     sendMessage(socket, f"LOSE {secretWord}", addressOpponent, 'GAME')
 
 
+def sendUsersPlaying(socket, user, opponent):
+    sendMessage(socket, f"playing {user} {opponent}", idMessage='SERVER')
+
+
+def sendUsersStopPlaying(socket, user, opponent):
+    sendMessage(socket, f"stopPlaying {user} {opponent}", idMessage='SERVER')
+
+
+def sendDisconnect(socket, user):
+    sendMessage(socket, f"disconnect {user}", idMessage='SERVER')
+
+
 def createSocket():
     port = getPort()
     sock = socket(AF_INET, SOCK_DGRAM)
@@ -281,7 +295,8 @@ def login(socket, idMessage, recievedMessages):
     while recievedMessage != "Successfully authenticated":
         printSeparator("Login in:")
         name, user, password = getLoginInformation()
-        sendMessage(socket, f"login {name} {user} {password}", idMessage=idMessage)
+        sendMessage(
+            socket, f"login {name} {user} {password}", idMessage=idMessage)
         recievedMessage, address = recieveMessage(idMessage, recievedMessages)
         print(recievedMessage)
     return user
@@ -310,16 +325,18 @@ def returnWordLettersFound(word, letters):
 
 def main():
     def resetGamesVariables():
-        nonlocal playing, addressOpponent, youInvited, secretWord, lettersTried
+        nonlocal playing, addressOpponent, youInvited, secretWord, lettersTried, opponent
         playing = False
-        addressOpponent = ''
         youInvited = False
+        addressOpponent = ''
+        opponent = ''
         secretWord = ''
         lettersTried = []
 
     recievedMessages = {}
     socket = createSocket()
-    myThread = threading.Thread(target=reciveMessages, args=(socket, recievedMessages))
+    myThread = threading.Thread(
+        target=reciveMessages, args=(socket, recievedMessages))
     myThread.daemon = True
     myThread.start()
 
@@ -332,22 +349,27 @@ def main():
     lettersTried = []
     lettersMissing = 0
     wrongTries = 0
+    opponent = ''
 
     while 1:
         if 'CLIENT_INV' in recievedMessages:
-            response, possibleAddressOpponent = invitedToPlay(
+            response, possibleAddressOpponent, possibleOpponent = invitedToPlay(
                 socket, recievedMessages)
             if response:
-                if addressOpponent != '':
+                if playing:
                     printGameOver()
                     sendGameOver(socket, addressOpponent)
+                    if youInvited:
+                        sendUsersPlaying(socket, user, opponent)
+                resetGamesVariables()
                 playing = True
                 addressOpponent = possibleAddressOpponent
-                youInvited = False
-                secretWord = ''
-                lettersTried = []
+                opponent = possibleOpponent
         elif 'GAME_OVER' in recievedMessages:
             recievedGameOver(recievedMessages)
+            if youInvited:
+                sendUsersStopPlaying(socket, user, opponent)
+            printGameOver()
             resetGamesVariables()
         elif playing:
             if youInvited:
@@ -366,7 +388,8 @@ def main():
                 else:
                     match(getOptionGame(youInvited)):
                         case 1:
-                            sendGameMessage(socket, f'{returnWordLettersFound(secretWord, lettersTried)} {wrongTries}', addressOpponent)
+                            sendGameMessage(
+                                socket, f'{returnWordLettersFound(secretWord, lettersTried)} {wrongTries}', addressOpponent)
                             recievedMessage = recieveGameMessage(
                                 recievedMessages)
                             if len(recievedMessage) == 1:
@@ -383,21 +406,27 @@ def main():
                                 else:
                                     wrongTries += 1
                         case 2:
+                            sendGameMessage(
+                                socket, f'{returnWordLettersFound(secretWord, lettersTried)} {wrongTries}', addressOpponent)
                             sendGameOver(socket, addressOpponent)
+                            sendUsersStopPlaying(socket, user, opponent)
                             printGameOver()
                             resetGamesVariables()
             else:
                 recievedMessage = recieveGameMessage(recievedMessages)
                 if getFirstWord(recievedMessage) == 'WON':
-                    print(f'The secret word was {recievedMessage.split()[1]}')
+                    print(
+                        f'The secret word was {recievedMessage.replace("WON ", "")}')
                     resetGamesVariables()
                     printWin()
                 elif getFirstWord(recievedMessage) == 'LOSE':
-                    print(f'The secret word was {recievedMessage.split()[1]}')
+                    print(
+                        f'The secret word was {recievedMessage.replace("LOSE ", "")}')
                     resetGamesVariables()
                     printLose()
                 else:
-                    printHangManWord(getFirstWord(recievedMessage), recievedMessage.split()[1])
+                    printHangManWord(recievedMessage.replace(
+                        ' ' + recievedMessage.split()[-1], ''), recievedMessage.split()[-1])
                     match(getOptionGame(youInvited)):
                         case 1:
                             letter = getLetter()
@@ -406,7 +435,9 @@ def main():
                             word = getWord()
                             sendGameMessage(socket, word, addressOpponent)
                         case 3:
+                            sendGameMessage(socket, '', addressOpponent)
                             sendGameOver(socket, addressOpponent)
+                            sendUsersPlaying(socket, user, opponent)
                             printGameOver()
                             resetGamesVariables()
         else:
@@ -422,9 +453,12 @@ def main():
                         socket, recievedMessages, user, opponent)
                     if playing:
                         youInvited = True
+                        sendUsersPlaying(socket, user, opponent)
                     else:
-                        print("The opponent was not found or your invitation was rejected")
+                        print(
+                            "The opponent was not found or your invitation was rejected")
                 case 9:
+                    sendDisconnect(socket, user)
                     break
                 case _:
                     printInvalid()

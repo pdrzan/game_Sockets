@@ -26,7 +26,7 @@ def requestUDP(message, address):
                 authenticationSucess(message[0], address)
             else:
                 authenticationFailed(message[0], address)
-        case 'diconnect':
+        case 'disconnect':
             if verifyUserOnline(message[2], address):
                 delUserOnline(message[2])
             else:
@@ -119,11 +119,12 @@ def addUserOnline(user, ip, port):
 
 
 def changeStatusUserOnline(user):
+    print(f'{user} is {usersOnline[user]["status"]}')
     if usersOnline[user]['status'] == 'active':
-        usersOnline[user]['status'] == 'inactive'
+        usersOnline[user]['status'] = 'inactive'
         registerLog([user], 'inactive')
     else:
-        usersOnline[user]['status'] == 'active'
+        usersOnline[user]['status'] = 'active'
         registerLog([user], 'active')
 
 
@@ -164,7 +165,7 @@ def addUsersPlaying(firstUser, secondUser):
 
 
 def delUsersPlaying(firstUser, secondUser):
-    usersOnline.pop(firstUser + 'X' + secondUser)
+    usersPlaying.pop(firstUser + 'X' + secondUser)
     registerLog([firstUser, secondUser], 'stopPlaying')
     changeStatusUserOnline(firstUser)
     changeStatusUserOnline(secondUser)
