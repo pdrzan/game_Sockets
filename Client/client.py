@@ -1,8 +1,10 @@
+from ipaddress import ip_address
 import time
 from socket import *
 import threading
 from threading import *
 
+serverIpAddrees = ''
 
 def printGameOver():
     print(f"The game with game is over")
@@ -89,7 +91,7 @@ def addressStrintToAddressTuple(addressString):
     return (addressString.split()[0], int(addressString.split()[1]))
 
 
-def sendMessage(socket, message, address=('', 12000), idMessage=''):
+def sendMessage(socket, message, address=(serverIpAddrees, 12000), idMessage=''):
     if idMessage != '':
         message = f"{idMessage} {message}"
     socket.sendto(stringToBytes(message), address)
@@ -285,7 +287,7 @@ def sendDisconnect(socket, user):
 def createSocket():
     port = getPort()
     sock = socket(AF_INET, SOCK_DGRAM)
-    sock.bind(("", port))
+    sock.bind(('', port))
     return sock
 
 
@@ -296,6 +298,7 @@ def login(socket, idMessage, recievedMessages):
         name, user, password = getLoginInformation()
         sendMessage(
             socket, f"login {name} {user} {password}", idMessage=idMessage)
+
         recievedMessage, address = recieveMessage(idMessage, recievedMessages)
         print(recievedMessage)
     return user
@@ -333,6 +336,11 @@ def main():
         lettersTried = []
 
     recievedMessages = {}
+
+    #achando o servidor
+    global serverIpAddrees 
+    serverIpAddrees = input("Insira o endereço de ip do server na rede: ")
+
     socket = createSocket()
     myThread = threading.Thread(
         target=reciveMessages, args=(socket, recievedMessages))
