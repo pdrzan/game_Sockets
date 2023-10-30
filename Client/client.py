@@ -391,7 +391,8 @@ def main():
                     printWin()
                     resetGamesVariables()
                 else:
-                    if (getOptionGame(youInvited) == 1):
+                    option = getOptionGame(youInvited)
+                    if (option == 1):
                         sendGameMessage(
                             socket, f'{returnWordLettersFound(secretWord, lettersTried)} {wrongTries}', addressOpponent)
                         recievedMessage = recieveGameMessage(
@@ -409,7 +410,7 @@ def main():
                                 lettersMissing = 0
                             else:
                                 wrongTries += 1
-                    elif (getOptionGame(youInvited) == 2):
+                    elif (option == 2):
                         sendGameMessage(
                             socket, f'{returnWordLettersFound(secretWord, lettersTried)} {wrongTries}', addressOpponent)
                         sendGameOver(socket, addressOpponent)
@@ -429,16 +430,15 @@ def main():
                     resetGamesVariables()
                     printLose()
                 else:
-                    printHangManWord(recievedMessage.replace(
-                        ' ' + recievedMessage.split()[-1], ''), recievedMessage.split()[-1])
-                    if (getOptionGame(youInvited) == 1):
-                    
+                    printHangManWord(recievedMessage.replace(' ' + recievedMessage.split()[-1], ''), recievedMessage.split()[-1])
+                    option = getOptionGame(youInvited)
+                    if (option == 1):
                         letter = getLetter()
                         sendGameMessage(socket, letter, addressOpponent)
-                    elif (getOptionGame(youInvited) == 2):
+                    elif (option == 2):
                         word = getWord()
                         sendGameMessage(socket, word, addressOpponent)
-                    elif (getOptionGame(youInvited) == 3):
+                    elif (option == 3):
                         sendGameMessage(socket, '', addressOpponent)
                         sendGameOver(socket, addressOpponent)
                         sendUsersPlaying(socket, user, opponent)
