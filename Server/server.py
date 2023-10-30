@@ -13,53 +13,54 @@ from socket import *
 def requestUDP(message, address):
     message = message.decode('utf-8').split()
     print("Recived:\n", message)
-    match(message[1]):
-        case 'login':
-            # name user password // pattern
-            print('Passou')
-            if not verifyUserExistence(message[3]):
-                registerUser(message[2], message[3], message[4])
-                authenticationSucess(message[0], address)
-                addUserOnline(message[3], address[0], address[1])
-            elif verifyPassword(message[3], message[4]):
-                addUserOnline(message[3], address[0], address[1])
-                authenticationSucess(message[0], address)
-            else:
-                authenticationFailed(message[0], address)
-        case 'disconnect':
-            if verifyUserOnline(message[2], address):
-                delUserOnline(message[2])
-            else:
-                notLogged(message[0], address)
-        case 'listOnline':
-            # user // pattern
-            if verifyUserOnline(message[2], address):
-                sendMessage(f"{message[0]} {returnUsersOnline()}", address)
-            else:
-                notLogged(message[0], address)
-        case 'listPlaying':
-            # user // pattern
-            if verifyUserOnline(message[2], address):
-                sendMessage(f"{message[0]} {returnUsersPlaying()}", address)
-            else:
-                notLogged(message[0], address)
-        case 'userInformation':
-            # user opponent // pattern
-            if verifyUserOnline(message[2], address):
-                sendMessage(
-                    f"{message[0]} {returnOpponent(message[3])}", address)
-            else:
-                notLogged(message[0], address)
-        case 'playing':
-            if verifyUserOnline(message[2], address):
-                addUsersPlaying(message[2], message[3])
-            else:
-                notLogged(message[0], address)
-        case 'stopPlaying':
-            if verifyUserOnline(message[2], address):
-                delUsersPlaying(message[2], message[3])
-            else:
-                notLogged(message[0], address)
+    if(message[1] == 'login'):
+
+        # name user password // pattern
+        print('Passou')
+        if not verifyUserExistence(message[3]):
+            registerUser(message[2], message[3], message[4])
+            authenticationSucess(message[0], address)
+            addUserOnline(message[3], address[0], address[1])
+        elif verifyPassword(message[3], message[4]):
+            addUserOnline(message[3], address[0], address[1])
+            authenticationSucess(message[0], address)
+        else:
+            authenticationFailed(message[0], address)
+
+    elif (message[1] == 'disconnect'):
+        if verifyUserOnline(message[2], address):
+            delUserOnline(message[2])
+        else:
+            notLogged(message[0], address)
+    elif (message[1] == 'listOnline'):
+        # user // pattern
+        if verifyUserOnline(message[2], address):
+            sendMessage(f"{message[0]} {returnUsersOnline()}", address)
+        else:
+            notLogged(message[0], address)
+    elif (message[1] == 'listPlaying'):
+        # user // pattern
+        if verifyUserOnline(message[2], address):
+            sendMessage(f"{message[0]} {returnUsersPlaying()}", address)
+        else:
+            notLogged(message[0], address)
+    elif (message[1] == 'userInformation'):
+        # user opponent // pattern
+        if verifyUserOnline(message[2], address):
+            sendMessage(
+                f"{message[0]} {returnOpponent(message[3])}", address)
+        else:
+            notLogged(message[0], address)
+    elif (message[1] == 'playing'):
+        if verifyUserOnline(message[2], address):
+            addUsersPlaying(message[2], message[3])
+        else:
+            notLogged(message[0], address)
+    elif (message[1] == 'stopPlaying'):
+        if verifyUserOnline(message[2], address):
+            delUsersPlaying(message[2], message[3])
+        else:
+            notLogged(message[0], address)
 
 
 def sendMessage(message, address):
@@ -86,31 +87,30 @@ def formatIntSizeTwo(number):
 def registerLog(users, type):
     localTime = time.localtime()
     localTime = f"{formatIntSizeTwo(localTime.tm_hour)}:{formatIntSizeTwo(localTime.tm_min)}:{formatIntSizeTwo(localTime.tm_sec)} {formatIntSizeTwo(localTime.tm_mday)}/{formatIntSizeTwo(localTime.tm_mon)}/{localTime.tm_year}"
-    match(type):
-        case 'register':
-            appendData('../Data/game.log',
-                       f"{localTime}: User {users[0]} registered\n")
-        case 'connect':
-            appendData('../Data/game.log',
-                       f"{localTime}: User {users[0]} connected\n")
-        case 'timeout':
-            appendData('../Data/game.log',
-                       f"{localTime}: User {users[0]} does not reply (timeout)\n")
-        case 'inactive':
-            appendData('../Data/game.log',
-                       f"{localTime}: User {users[0]} became inactive\n")
-        case 'active':
-            appendData('../Data/game.log',
-                       f"{localTime}: User {users[0]} became active\n")
-        case 'playing':
-            appendData('../Data/game.log',
-                       f"{localTime}: Users {users[0]} and {users[1]} are playing\n")
-        case 'stopPlaying':
-            appendData('../Data/game.log',
-                       f"{localTime}: Users {users[0]} and {users[1]} are not playing anymore\n")
-        case 'disconnect':
-            appendData('../Data/game.log',
-                       f"{localTime}: User {users[0]} disconnected\n")
+    if (type == 'register'):
+        appendData('../Data/game.log',
+                    f"{localTime}: User {users[0]} registered\n")
+    elif (type == 'connect'):
+        appendData('../Data/game.log',
+                    f"{localTime}: User {users[0]} connected\n")
+    elif (type ==  'timeout'):
+        appendData('../Data/game.log',
+                    f"{localTime}: User {users[0]} does not reply (timeout)\n")
+    elif (type ==  'inactive'):
+        appendData('../Data/game.log',
+                    f"{localTime}: User {users[0]} became inactive\n")
+    elif (type ==  'active'):
+        appendData('../Data/game.log',
+                    f"{localTime}: User {users[0]} became active\n")
+    elif (type ==  'playing'):
+        appendData('../Data/game.log',
+                    f"{localTime}: Users {users[0]} and {users[1]} are playing\n")
+    elif (type ==  'stopPlaying'):
+        appendData('../Data/game.log',
+                    f"{localTime}: Users {users[0]} and {users[1]} are not playing anymore\n")
+    elif (type ==  'disconnect'):
+        appendData('../Data/game.log',
+                    f"{localTime}: User {users[0]} disconnected\n")
 
 
 def addUserOnline(user, ip, port):
