@@ -226,7 +226,6 @@ def listUserPlaying(socket, recievedMessages, user):
 def inviteToPlay(socket, recievedMessages, user, opponent):
     addressOpponent = getUserInformation(
         socket, recievedMessages, user, opponent)
-    print(addressOpponent)
     addressOpponent = addressStrintToAddressTuple(addressOpponent)
     if addressOpponent != "Opponent not found":
         sendMessage(socket, f'GAME_INI {user}', addressOpponent, 'CLIENT_INV')
@@ -309,9 +308,7 @@ def login(socket, idMessage, recievedMessages):
         name, user, password = getLoginInformation()
         sendMessage(socket, f"login {name} {user} {password}",
                     (serverIpAddrees, 12000), idMessage=idMessage)
-
         recievedMessage, address = recieveMessage(idMessage, recievedMessages)
-        print(recievedMessage)
     return user
 
 
