@@ -4,6 +4,8 @@ from socket import *
 import threading
 from threading import *
 
+serverIpAddrees = ''
+
 def printGameOver():
     print(f"The game with game is over")
 
@@ -89,7 +91,7 @@ def addressStrintToAddressTuple(addressString):
     return (addressString.split()[0], int(addressString.split()[1]))
 
 
-def sendMessage(socket, message, address=('', 12000), idMessage=''):
+def sendMessage(socket, message, address, idMessage=''):
     if idMessage != '':
         message = f"{idMessage} {message}"
     socket.sendto(stringToBytes(message), address)
@@ -196,20 +198,19 @@ def getWord():
 
 
 def getUserInformation(socket, recievedMessages, user, opponent):
-    sendMessage(
-        socket, f'userInformation {user} {opponent}', idMessage='SERVER')
+    sendMessage(socket, f'userInformation {user} {opponent}',(serverIpAddrees,12000), idMessage='SERVER')
     recievedMessage, address = recieveMessage('SERVER', recievedMessages)
     return recievedMessage
 
 
 def listUserOnline(socket, recievedMessages, user):
-    sendMessage(socket, f'listOnline {user}', idMessage='SERVER')
+    sendMessage(socket, f'listOnline {user}',(serverIpAddrees,12000), idMessage='SERVER')
     recievedMessage, address = recieveMessage('SERVER', recievedMessages)
     print(recievedMessage)
 
 
 def listUserPlaying(socket, recievedMessages, user):
-    sendMessage(socket, f'listPlaying {user}', idMessage='SERVER')
+    sendMessage(socket, f'listPlaying {user}',(serverIpAddrees,12000), idMessage='SERVER')
     recievedMessage, address = recieveMessage('SERVER', recievedMessages)
     print(recievedMessage)
 
@@ -271,15 +272,15 @@ def sendGameLose(socket, addressOpponent, secretWord):
 
 
 def sendUsersPlaying(socket, user, opponent):
-    sendMessage(socket, f"playing {user} {opponent}", idMessage='SERVER')
+    sendMessage(socket, f"playing {user} {opponent}",(serverIpAddrees,12000), idMessage='SERVER')
 
 
 def sendUsersStopPlaying(socket, user, opponent):
-    sendMessage(socket, f"stopPlaying {user} {opponent}", idMessage='SERVER')
+    sendMessage(socket, f"stopPlaying {user} {opponent}",(serverIpAddrees,12000), idMessage='SERVER')
 
 
 def sendDisconnect(socket, user):
-    sendMessage(socket, f"disconnect {user}", idMessage='SERVER')
+    sendMessage(socket, f"disconnect {user}",(serverIpAddrees,12000), idMessage='SERVER')
 
 
 def createSocket():
@@ -289,12 +290,12 @@ def createSocket():
     return sock
 
 
-def login(socket, ipAddress, idMessage, recievedMessages):
+def login(socket, idMessage, recievedMessages):
     recievedMessage = ''
     while recievedMessage != "Successfully authenticated":
         printSeparator("Login in:")
         name, user, password = getLoginInformation()
-        sendMessage(socket, f"login {name} {user} {password}",(ipAddress,1200), idMessage=idMessage)
+        sendMessage(socket, f"login {name} {user} {password}",(serverIpAddrees,12000), idMessage=idMessage)
 
         recievedMessage, address = recieveMessage(idMessage, recievedMessages)
         print(recievedMessage)
@@ -335,7 +336,8 @@ def main():
     recievedMessages = {}
 
     #achando o servidor
-    serverIpAddrees = input("Insira o endereço de ip do server na rede: ")
+    global serverIpAddrees
+    serverIpAddrees = input("Digite o endereço do servidor: ")
 
     socket = createSocket()
     myThread = threading.Thread(
@@ -343,7 +345,7 @@ def main():
     myThread.daemon = True
     myThread.start()
 
-    user = login(socket,serverIpAddrees, 'SERVER', recievedMessages)
+    user = login(socket, 'SERVER', recievedMessages)
     playing = False
     youInvited = False
     addressOpponent = ''
