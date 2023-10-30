@@ -218,6 +218,7 @@ def listUserPlaying(socket, recievedMessages, user):
 def inviteToPlay(socket, recievedMessages, user, opponent):
     addressOpponent = getUserInformation(
         socket, recievedMessages, user, opponent)
+    print(addressOpponent)
     addressOpponent = addressStrintToAddressTuple(addressOpponent)
     if addressOpponent != "Opponent not found":
         sendMessage(socket, f'GAME_INI {user}', addressOpponent, 'CLIENT_INV')
@@ -272,11 +273,11 @@ def sendGameLose(socket, addressOpponent, secretWord):
 
 
 def sendUsersPlaying(socket, user, opponent):
-    sendMessage(socket, f"playing {user} {opponent}",(serverIpAddrees,12000), idMessage='SERVER')
+    sendMessage(socket, f"playing {user} {opponent}", idMessage='SERVER')
 
 
 def sendUsersStopPlaying(socket, user, opponent):
-    sendMessage(socket, f"stopPlaying {user} {opponent}",(serverIpAddrees,12000), idMessage='SERVER')
+    sendMessage(socket, f"stopPlaying {user} {opponent}", idMessage='SERVER')
 
 
 def sendDisconnect(socket, user):
