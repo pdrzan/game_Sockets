@@ -13,10 +13,7 @@ from socket import *
 def requestUDP(message, address):
     message = message.decode('utf-8').split()
     print("Recived:\n", message)
-    if(message[1] == 'login'):
-
-        # name user password // pattern
-        print('Passou')
+    if (message[1] == 'login'):
         if not verifyUserExistence(message[3]):
             registerUser(message[2], message[3], message[4])
             authenticationSucess(message[0], address)
@@ -89,28 +86,28 @@ def registerLog(users, type):
     localTime = f"{formatIntSizeTwo(localTime.tm_hour)}:{formatIntSizeTwo(localTime.tm_min)}:{formatIntSizeTwo(localTime.tm_sec)} {formatIntSizeTwo(localTime.tm_mday)}/{formatIntSizeTwo(localTime.tm_mon)}/{localTime.tm_year}"
     if (type == 'register'):
         appendData('../Data/game.log',
-                    f"{localTime}: User {users[0]} registered\n")
+                   f"{localTime}: User {users[0]} registered\n")
     elif (type == 'connect'):
         appendData('../Data/game.log',
-                    f"{localTime}: User {users[0]} connected\n")
-    elif (type ==  'timeout'):
+                   f"{localTime}: User {users[0]} connected\n")
+    elif (type == 'timeout'):
         appendData('../Data/game.log',
-                    f"{localTime}: User {users[0]} does not reply (timeout)\n")
-    elif (type ==  'inactive'):
+                   f"{localTime}: User {users[0]} does not reply (timeout)\n")
+    elif (type == 'inactive'):
         appendData('../Data/game.log',
-                    f"{localTime}: User {users[0]} became inactive\n")
-    elif (type ==  'active'):
+                   f"{localTime}: User {users[0]} became inactive\n")
+    elif (type == 'active'):
         appendData('../Data/game.log',
-                    f"{localTime}: User {users[0]} became active\n")
-    elif (type ==  'playing'):
+                   f"{localTime}: User {users[0]} became active\n")
+    elif (type == 'playing'):
         appendData('../Data/game.log',
-                    f"{localTime}: Users {users[0]} and {users[1]} are playing\n")
-    elif (type ==  'stopPlaying'):
+                   f"{localTime}: Users {users[0]} and {users[1]} are playing\n")
+    elif (type == 'stopPlaying'):
         appendData('../Data/game.log',
-                    f"{localTime}: Users {users[0]} and {users[1]} are not playing anymore\n")
-    elif (type ==  'disconnect'):
+                   f"{localTime}: Users {users[0]} and {users[1]} are not playing anymore\n")
+    elif (type == 'disconnect'):
         appendData('../Data/game.log',
-                    f"{localTime}: User {users[0]} disconnected\n")
+                   f"{localTime}: User {users[0]} disconnected\n")
 
 
 def addUserOnline(user, ip, port):
@@ -119,7 +116,6 @@ def addUserOnline(user, ip, port):
 
 
 def changeStatusUserOnline(user):
-    print(f'{user} is {usersOnline[user]["status"]}')
     if usersOnline[user]['status'] == 'active':
         usersOnline[user]['status'] = 'inactive'
         registerLog([user], 'inactive')
