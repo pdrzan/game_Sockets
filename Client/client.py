@@ -391,6 +391,8 @@ def main():
                     printWin()
                     resetGamesVariables()
                 else:
+                    printHangManWord(returnWordLettersFound(
+                        secretWord, lettersTried), f'{wrongTries}')
                     option = getOptionGame(youInvited)
                     if (option == 1):
                         sendGameMessage(
